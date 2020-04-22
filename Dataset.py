@@ -5,6 +5,7 @@ Created on Sat Apr 18 14:28:04 2020
 @author: apaudice
 """
 
+import numpy as np
 from sklearn.datasets import make_blobs
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
@@ -96,11 +97,77 @@ class Dataset(object):
         plt.ylabel(r'$x_2$')
         plt.grid()
         plt.show()
+        
+    def removePoints(self, idx_list):
+        if (idx_list.size > self.n):
+            raise NameError('Too many points to remove.')
+        else:
+            self.X_ = np.delete(self.X_, idx_list, 0)
+            self.y_ = np.delete(self.y_, idx_list)
+            self.n -= idx_list.size
+
+    def sample(self, m):
+        """Sample point u.a.r. from X. Return both the points and the labels.
+        
+        Parameters
+        ------------
+        m : int
+            Sample size.
+        
+        Returns
+        ------------
+        sample : {array-like}, shape = [#points, #features]
+        labels : {array-like}, shape = [#points]
+        """
+        
+        idxs = np.random.choice(self.n, m)
+        sample = self.X_[idxs]
+        labels = self.y_[idxs]
+        
+        return sample, labels
+
+
 
 # =============================================================================
-# data = Dataset()
+# #Test: sample
+# data = Dataset(n=10, d=2)
 # data.generate()
-# data.scatterData()
+# 
+# print('Test sample.')
+# print('------------\n')
+# 
+# Z, y = data.sample(5)
+# 
+# print('Samples.\n', Z)
+# print('Labels:', y, '\n')
+# 
+# print('Mean computation.')
+# print('------------\n')
+# 
+# unique, counts = np.unique(y, return_counts=True)
+# 
+# print('Sampled clusters: ', unique) 
+# print('#points per cluster: ', counts)
+# 
+# p = np.argmax(counts)
+# 
+# print('Largest sampled cluster:', p)
+# print(Z[np.where(y == p)])
+# print('Mean:', np.mean(Z[np.where(y == p)], axis = 0), '\n')
+# 
+# #Test: removePoints
+# #Test: sample
+# print('Test removePoints.')
+# print('------------\n')
+# 
+# print('Data:')
+# print(data.X_, '\n')
+# 
+# idx = np.array([0, 1])
+# data.removePoints(idx)
+# 
+# print('New data:')
+# print(data.X_)
 # =============================================================================
 
 # =============================================================================
