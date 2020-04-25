@@ -19,6 +19,10 @@ class Clustering(object):
         Cluster memberiships.
     k : int
         Maximum #clusters.
+    U : {array-like}, shape = [., #features]
+        Unclustered points.
+    U_list :array-like}, shape = [., #features]
+        Unclustered points.
 
     Attributes
     ------------
@@ -30,111 +34,79 @@ class Clustering(object):
         Sizes of the clusters.
     probabilities_ : {arra-like}, shape = [#clusters]
         Relative (to the total number of points) sizes of the clusters.
-    """
-    
-    def __init__(self, X, y, k):
-        self.X = X
-        self.y = y
+    """    
+
+    def __init__(self, y = np.array([]), k = 1):
         self.k = k
-        
-        self.k_count_ = k
-        self.n_ = X.shape[0]
-        self.k_list_ = {}
+    
+        self.k_count_ = 0
+        self.n_ = y.size
+        self.clusters_ = {i: [] for i in range(k)}
         self.sizes_ = np.zeros(k)
         self.probabilities_ = np.zeros(k)
-
-        for i in np.arange(k):
-            self.sizes_[i] = np.count_nonzero(y == i)
-            self.probabilities_[i] = self.sizes_[i]/y.size
-            self.k_list_[i] = np.argwhere(y == i).tolist()
-                        
+        self.U_list = []
     
-    def addCluster(self, C, label):
-        """Add a cluster to the clustering.
-        
-        Parameters
-        ------------
-        m : int
-            Sample size.
-        
-        Returns
-        ------------
-        sample : {array-like}, shape = [#points, #features]
-        labels
-        """
-        
-        if (self.k_count_ >= self.k):
-            raise NameError('Too many clusters!')
+        if (y.size > 0):
+            for i in np.arange(k):
+                self.k_count_ += 1
+                self.sizes_[i] = np.count_nonzero(y == i)
+                self.probabilities_[i] = self.sizes_[i]/y.size
+                self.clusters_[i] = np.argwhere(y == i).tolist()
+                
+    def areUnlustered(self):
+        if (len(self.U_list) > 0):
+            return True
         else:
-            self.k_list_[label] = C
-            self.k_count_ = self.k_count_ + 1
-            
-            
-    def removePoints(self, idx_list, label):
-        if (self.k_count_ == 0):
-            raise NameError('There are no clusters')
-        elif (idx_list.size > self.k_list_[label].size):
-            raise NameError('Too many points to remove.')
-        else:
-            self.k_list_[label] = np.delete(self.k_list_[label], idx_list)
-            if (self.k_list_[label == 0]):
-                self.k_count_ = self.k_count_ - 1
+            return False
         
+    def declareUnclusterd(self, idx):
+        self.U_list = idx
+    
+    def editCluster(self, C, label):
+        if ((len(self.clusters_[label]) == 0)):
+            self.k_count_ += 1
         
-    def sample(self, m):
-        """Sample point u.a.r. from X. Return both the points and the labels.
+        #☺temp = self.clusters_[label]        
+        #temp += C
+        #self.clusters_[label] = list(dict.fromkeys(temp))
+        self.clusters_[label] += C 
+        self.sizes_[label] += len(C)
+        self.n_ += len(C)
+        self.probabilities_[label] = self.sizes_[label]/self.n_
         
-        Parameters
-        ------------
-        m : int
-            Sample size.
+    def clustersTodata(self):
+        X = np.array([])
+        y = np.array([])
+        for i in np.arange(self.k_count_):
+            X = np.concatenate(X, np.array(self.clusters_[i]), axis=1)
+            y = np.concatenate(y, i * np.ones(len(self.clusters_[i])), axis=1)
+        X = np.concatenate(X, np.array(self.U_list), axis=1)
+        y = np.concatenate(y, -1 * np.ones(len(self.U_list)), axis=1)
+        idx = np.argsort(X)
         
-        Returns
-        ------------
-        sample : {array-like}, shape = [#points, #features]
-        labels : {array-like}, shape = [#points]
-        """
+        return X[idx], y[idx]
         
-        idxs = np.random.choice(self.n_, m)
-        sample = self.X[idxs]
-        labels = self.y[idxs]
-        
-        return sample, labels
     
     def printClusters(self):
         print('There are: ', self.k_count_, ' clusters.')
-        print(self.k_list_)
+        print(self.clusters_)
 
-#Tests
-data = Dataset.Dataset(n=10, d=2)
-data.generate()
 
-#Test: __init__
-C = Clustering(data.X_, data.y_, 3)
-
-#Test: sample
-print('Test sample.')
-print('------------\n')
-Z, y = C.sample(5)
-print('Samples.\n', Z)
-print('Labels:', y, '\n')
-
-print('Mean computation.')
-print('------------\n')
-unique, counts = np.unique(y, return_counts=True)
-print('Sampled clusters: ', unique) 
-print('#points per cluster: ', counts)
-
-p = np.argmax(counts)
-print('Largest sampled cluster:', p)
-print(Z[np.where(y == p)])
-print('Mean:', np.mean(Z[np.where(y == p)], axis = 0), '\n')
-
-#Test for distances
-print('Distance computation.')
-print('------------\n')
-
-mu = np.mean(Z[np.where(y == p)], axis = 0)
-n = Z.shape[0]
-print('Distances from the samples to mean:')
-print(np.linalg.norm(Z - np.tile(mu, (n, 1)), axis = 1))
+# =============================================================================
+# #Tests
+# data = Dataset.Dataset(n=150, d=2)
+# data.generate()
+# 
+# #Test: __init__
+# C = Clustering(k = 3)
+# X, y, idxs = data.sample(10)
+# 
+# C.printClusters()
+# 
+# C.editCluster(idxs[np.where(y == 1)].tolist(), 1)
+# 
+# C.printClusters()
+# 
+# C.editCluster(idxs[np.where(y == 1)].tolist(), 1)
+# C.printClusters()
+# =============================================================================

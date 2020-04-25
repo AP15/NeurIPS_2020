@@ -56,8 +56,47 @@ class Dataset(object):
                   cluster_std=0.5, 
                   shuffle=True, 
                   random_state=self.seed)
+        self.points_ = np.arange(self.n)
         
         return self
+
+
+    def getPoints(self, idx_list):
+        if (idx_list.size > self.n):
+            raise NameError('Too many points to remove.')
+        else:
+            return self.points_[idx_list]
+            
+            
+    def removePoints(self, idx_list):
+        if (idx_list.size > self.n):
+            raise NameError('Too many points to remove.')
+        else:
+            self.X_ = np.delete(self.X_, idx_list, 0)
+            self.y_ = np.delete(self.y_, idx_list)
+            self.points_ = np.delete(self.points_, idx_list)
+            self.n -= idx_list.size
+
+    
+    def sample(self, m):
+        """Sample point u.a.r. from X. Return both the points and the labels.
+        
+        Parameters
+        ------------
+        m : int
+            Sample size.
+        
+        Returns
+        ------------
+        sample : {array-like}, shape = [#points, #features]
+        labels : {array-like}, shape = [#points]
+        """
+        
+        idxs = np.random.choice(self.n, m)
+        sample = self.X_[idxs]
+        labels = self.y_[idxs]
+        
+        return sample, labels
     
     def scatterData(self):
         """Scatter data along the first 2 features.
@@ -97,36 +136,6 @@ class Dataset(object):
         plt.ylabel(r'$x_2$')
         plt.grid()
         plt.show()
-        
-    def removePoints(self, idx_list):
-        if (idx_list.size > self.n):
-            raise NameError('Too many points to remove.')
-        else:
-            self.X_ = np.delete(self.X_, idx_list, 0)
-            self.y_ = np.delete(self.y_, idx_list)
-            self.n -= idx_list.size
-
-    def sample(self, m):
-        """Sample point u.a.r. from X. Return both the points and the labels.
-        
-        Parameters
-        ------------
-        m : int
-            Sample size.
-        
-        Returns
-        ------------
-        sample : {array-like}, shape = [#points, #features]
-        labels : {array-like}, shape = [#points]
-        """
-        
-        idxs = np.random.choice(self.n, m)
-        sample = self.X_[idxs]
-        labels = self.y_[idxs]
-        
-        return sample, labels
-
-
 
 # =============================================================================
 # #Test: sample

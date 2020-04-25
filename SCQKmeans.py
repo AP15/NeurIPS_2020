@@ -7,11 +7,11 @@ Created on Sat Apr 18 18:09:03 2020
 
 import numpy as np
 import Dataset as ds
-#import Clustering
+import Clustering
 import BinSearch as bs
 
 class SCQKmeans(object):
-    """Shai algorithms for k-means with same-cluster-queries.
+    """SBD algorithms for k-means with same-cluster-queries.
  
     Parameters
     ------------
@@ -31,7 +31,7 @@ class SCQKmeans(object):
         self.delta = delta
         self.seed = seed
  
-    def cluster(self, data, k):
+    def cluster(self, data, k_):
         """Scatter data along the first 2 features.
  
         Parameters
@@ -40,43 +40,53 @@ class SCQKmeans(object):
             Points to cluster.
         y : {array-like}, shape = [#points]
             Cluster membership oracle.
-        k : int
+        k_ : int
             #Clusters
-        C_star : Clustering object
-            Ground truth clustering
  
         Returns
         ------------
-        C : list
+        C : clustering
             Clustering of X.
         """
 
         searcher = bs.BinSearch()
         
-        C = {i: [] for i in range(k)}        
+        C = Clustering.Clustering(k = k_)
         
-        l = k*10
+        l = k_*30
         
-        for i in np.arange(k):
+        for i in np.arange(k_):
             #Phase 1
             Z, labels = data.sample(l)
             unique, counts = np.unique(labels, return_counts=True)
-            p = np.argmax(counts)
+            p = unique[np.argmax(counts)]
             mu_p = np.mean(Z[np.where(labels == p)], axis = 0)
-        
+            
             #Phase 2
             dist_mu = np.linalg.norm(data.X_ - np.tile(mu_p, (data.X_.shape[0], 1)), axis = 1)
             dist_sort = np.sort(dist_mu)
             y_sort = data.y_[np.argsort(np.argsort(dist_mu))]        
             r = searcher.findRay(dist_sort, y_sort, p) 
             
-            C[p] = C[p] + np.argwhere(dist_mu <= r).tolist()
+            #print(dist_mu)
+            C.editCluster(data.getPoints(np.argwhere(dist_mu <= r)).tolist(), p)
             data.removePoints(np.argwhere(dist_mu <= r))
+            
+            if (data.n == 0):
+                break
+            
+        if (data.n_ > 0):
+            #self.clusterCompletion(data, C)
+            C.declareUnclusterd(data.points_)
         
         return C
-
-
-
+    
+    
+# =============================================================================
+#     def clusteringCompletion(self, data, C):
+#         n = data.n
+# =============================================================================
+        
 
 #Tests
 data = ds.Dataset(n=150, d=2, k=3)
@@ -84,5 +94,4 @@ data.generate()
 
 alg = SCQKmeans()
 C = alg.cluster(data, 3)
-print(C)
-                
+C.printClusters()
