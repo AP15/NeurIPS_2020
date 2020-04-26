@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Apr 18 18:09:03 2020
+Created on Sat Apr 25 18:28:22 2020
 
 @author: apaudice
 """
 
 import numpy as np
 import Dataset as ds
-import Clustering
 import BinSearch as bs
+import copy
 
-class SCQKmeans(object):
+class SCQKmeansNP(object):
     """SBD algorithms for k-means with same-cluster-queries.
  
     Parameters
@@ -52,35 +52,31 @@ class SCQKmeans(object):
 
         searcher = bs.BinSearch()
         
-        C = Clustering.Clustering(k = k_)
+        C = -1*np.ones(data.n)
         
         l = k_*B
         
         for i in np.arange(k_):
             #Phase 1
-            Z, labels = data.sample(l)
+            Z, labels, points = data.sample(l)
             unique, counts = np.unique(labels, return_counts=True)
             p = unique[np.argmax(counts)]
             mu_p = np.mean(Z[np.where(labels == p)], axis = 0)
             
             #Phase 2
             dist_mu = np.linalg.norm(data.X_ - np.tile(mu_p, (data.X_.shape[0], 1)), axis = 1)
-            dist_sort = np.sort(dist_mu)
-            y_sort = data.y_[np.argsort(dist_mu)]        
+            sort_idxs = np.argsort(dist_mu)
+            dist_sort = dist_mu[sort_idxs]
+            y_sort = data.y_[sort_idxs]        
             r = searcher.findRay(dist_sort, y_sort, p) 
             
-            #print(dist_mu)
-            C.editCluster(data.getPoints(np.argwhere(dist_mu <= r)).tolist(), p)
+            C[data.getPoints(np.argwhere(dist_mu <= r))] = p
             data.removePoints(np.argwhere(dist_mu <= r))
             
             if (data.n == 0):
                 break
-            
-        if (data.n > 0):
-            #self.clusterCompletion(data, C)
-            C.declareUnclusterd(data.points_)
         
-        return C
+        return C.astype(int)
     
     
 # =============================================================================
@@ -89,12 +85,22 @@ class SCQKmeans(object):
 # =============================================================================
         
 
+#Tests
 # =============================================================================
-# #Tests
 # data = ds.Dataset(n=150, d=2, k=3)
 # data.generate()
+# data.scatterData()
 # 
-# alg = SCQKmeans()
-# C = alg.cluster(data, 3)
-# C.printClusters()
+# =============================================================================
+
+# =============================================================================
+# data = ds.Dataset()
+# data.importFromFile('aggregation.txt')
+# 
+# data_p = copy.deepcopy(data)
+# 
+# alg = SCQKmeansNP()
+# C = alg.cluster(data_p, 3, 10)
+# print(C)
+# print(data.y_)
 # =============================================================================

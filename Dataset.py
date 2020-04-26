@@ -7,7 +7,6 @@ Created on Sat Apr 18 14:28:04 2020
 
 import numpy as np
 from sklearn.datasets import make_blobs
-from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 
 class Dataset(object):
@@ -38,6 +37,23 @@ class Dataset(object):
         self.k = k
         self.seed = seed
     
+    
+    def importFromFile(self, filename):
+        gold = np.loadtxt(filename)
+        n = int(gold.shape[0])
+        d = int(gold.shape[1])
+        X_ = gold[:, 0:d-1]
+        y_ = gold[:, d-1].astype(int)
+        unique, counts = np.unique(y_, return_counts=True)
+        k = np.max(unique)
+        
+        self.n = n
+        self.d = d
+        self.k = k
+        self.X_ = X_
+        self.y_ = y_
+        self.points_ = np.arange(self.n)
+        
     def generate(self):
         """Generate the data
         
@@ -58,6 +74,39 @@ class Dataset(object):
                   random_state=self.seed)
         self.points_ = np.arange(self.n)
         
+        return self
+    
+    def generateEllipsoids(self):
+        """Generate the data
+    
+        Parameters
+        ------------
+        None
+        
+        Returns
+        ------------
+        self : object
+        """
+        
+        c = np.zeros((self.k, 2))
+        for i in range(self.k):
+            c[i, :] = [i*10, 1]
+        
+        self.X_, self.y_ = make_blobs(n_samples=self.n, 
+                  n_features=self.d, 
+                  centers=c, 
+                  cluster_std=0.5, 
+                  shuffle=True) 
+                  #random_state=self.seed)
+        self.points_ = np.arange(self.n)
+        
+        for i in range(self.d):
+            if (i%2):
+                self.X_[:, i] = np.divide(self.X_[:, i], 0.01)
+            #else:
+                #self.X_[:, i] = np.divide(self.X_[:, i], 
+                #       np.random.uniform(90, 100))
+    
         return self
 
 
@@ -93,10 +142,9 @@ class Dataset(object):
         """
         
         idxs = np.random.choice(self.n, m)
-        sample = self.X_[idxs]
-        labels = self.y_[idxs]
         
-        return sample, labels
+        return self.X_[idxs], self.y_[idxs], self.points_[idxs]
+    
     
     def scatterData(self):
         """Scatter data along the first 2 features.
@@ -110,32 +158,57 @@ class Dataset(object):
         None
         """
         
-        plt.figure()
-        plt.scatter(self.X_[self.y_ == 0, 0], self.X_[self.y_ == 0, 1],
-            s=50, 
-            c='lightgreen', 
-            marker='s', 
-            edgecolor='black',
-            label='cluster 1')
+        if (self.k == 3):
+            plt.figure()
+            plt.scatter(self.X_[self.y_ == 0, 0], self.X_[self.y_ == 0, 1],
+                s=50, 
+                c='lightgreen', 
+                marker='s', 
+                edgecolor='black',
+                label='cluster 1')
+    
+            plt.scatter(self.X_[self.y_ == 1, 0], self.X_[self.y_ == 1, 1], 
+                s=50, 
+                c='orange', 
+                marker='o', 
+                edgecolor='black',
+                label='cluster 2')
+    
+            plt.scatter(self.X_[self.y_ == 2, 0], self.X_[self.y_ == 2, 1],
+                s=50, 
+                c='lightblue',
+                marker='v', 
+                edgecolor='black',
+                label='cluster 3')
+    
+            plt.xlabel(r'$x_1$')
+            plt.ylabel(r'$x_2$')
+            plt.grid()
+            plt.show()
+        else:
+            plt.figure()
+            plt.scatter(self.X_[:, 0], self.X_[:, 1],
+                s=50, 
+                c='lightgreen', 
+                marker='s', 
+                edgecolor='black')
+            plt.xlabel(r'$x_1$')
+            plt.ylabel(r'$x_2$')
+            plt.grid()
+            plt.show()
+            
 
-        plt.scatter(self.X_[self.y_ == 1, 0], self.X_[self.y_ == 1, 1], 
-            s=50, 
-            c='orange', 
-            marker='o', 
-            edgecolor='black',
-            label='cluster 2')
+#Test: importFromFile
+#data = Dataset()
+#data.importFromFile('aggregation.txt')
+#data.scatterData()
 
-        plt.scatter(self.X_[self.y_ == 2, 0], self.X_[self.y_ == 2, 1],
-            s=50, 
-            c='lightblue',
-            marker='v', 
-            edgecolor='black',
-            label='cluster 3')
-
-        plt.xlabel(r'$x_1$')
-        plt.ylabel(r'$x_2$')
-        plt.grid()
-        plt.show()
+#Test: generateEllipsoid
+# =============================================================================
+# data = Dataset(n=10000, d=2, k=3)
+# data.generateEllipsoids()
+# data.scatterData()
+# =============================================================================
 
 # =============================================================================
 # #Test: sample
