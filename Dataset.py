@@ -6,6 +6,7 @@ Created on Sat Apr 18 14:28:04 2020
 """
 
 import numpy as np
+from scipy.stats import random_correlation
 from sklearn.datasets import make_blobs
 import matplotlib.pyplot as plt
 
@@ -54,61 +55,6 @@ class Dataset(object):
         self.y_ = y_
         self.points_ = np.arange(self.n)
         
-    def generate(self):
-        """Generate the data
-        
-        Parameters
-        ------------
-        None
-        
-        Returns
-        ------------
-        self : object
-        """
-        
-        self.X_, self.y_ = make_blobs(n_samples=self.n, 
-                  n_features=self.d, 
-                  centers=self.k, 
-                  cluster_std=0.5, 
-                  shuffle=True, 
-                  random_state=self.seed)
-        self.points_ = np.arange(self.n)
-        
-        return self
-    
-    def generateEllipsoids(self):
-        """Generate the data
-    
-        Parameters
-        ------------
-        None
-        
-        Returns
-        ------------
-        self : object
-        """
-        
-        c = np.zeros((self.k, 2))
-        for i in range(self.k):
-            c[i, :] = [i*10, 1]
-        
-        self.X_, self.y_ = make_blobs(n_samples=self.n, 
-                  n_features=self.d, 
-                  centers=c, 
-                  cluster_std=0.5, 
-                  shuffle=True) 
-                  #random_state=self.seed)
-        self.points_ = np.arange(self.n)
-        
-        for i in range(self.d):
-            if (i%2):
-                self.X_[:, i] = np.divide(self.X_[:, i], 0.01)
-            #else:
-                #self.X_[:, i] = np.divide(self.X_[:, i], 
-                #       np.random.uniform(90, 100))
-    
-        return self
-
 
     def getPoints(self, idx_list):
         if (idx_list.size > self.n):
@@ -197,103 +143,91 @@ class Dataset(object):
             plt.grid()
             plt.show()
             
+    def generate(self):
+        """Generate the data
+        
+        Parameters
+        ------------
+        None
+        
+        Returns
+        ------------
+        self : object
+        """
+        
+        self.X_, self.y_ = make_blobs(n_samples=self.n, 
+                  n_features=self.d, 
+                  centers=self.k, 
+                  cluster_std=0.5, 
+                  shuffle=True) 
+                  #random_state=self.seed)
+        self.points_ = np.arange(self.n)
+        
+        return self
+    
+    def generateEllipsoids(self):
+        """Generate the data
+    
+        Parameters
+        ------------
+        None
+        
+        Returns
+        ------------
+        self : object
+        """
+        
+        c = np.zeros((self.k, 2))
+        c_x = np.linspace(0, self.k*10, self.k)
+        for i in range(self.k):
+            c[i, :] = [c_x[i], 1+np.random.normal()]
+        
+        self.X_, self.y_ = make_blobs(n_samples=self.n, 
+                  n_features=self.d, 
+                  centers=c, 
+                  cluster_std=0.5, 
+                  shuffle=True) 
+                  #random_state=self.seed)
+        self.points_ = np.arange(self.n)
+        
+        for i in range(self.d):
+            if (i%2):
+                self.X_[:, i] = self.X_[:, i]/0.01
+    
+        return self
 
-#Test: importFromFile
-#data = Dataset()
-#data.importFromFile('aggregation.txt')
-#data.scatterData()
 
-#Test: generateEllipsoid
-# =============================================================================
-# data = Dataset(n=10000, d=2, k=3)
-# data.generateEllipsoids()
-# data.scatterData()
-# =============================================================================
-
-# =============================================================================
-# #Test: sample
-# data = Dataset(n=10, d=2)
-# data.generate()
-# 
-# print('Test sample.')
-# print('------------\n')
-# 
-# Z, y = data.sample(5)
-# 
-# print('Samples.\n', Z)
-# print('Labels:', y, '\n')
-# 
-# print('Mean computation.')
-# print('------------\n')
-# 
-# unique, counts = np.unique(y, return_counts=True)
-# 
-# print('Sampled clusters: ', unique) 
-# print('#points per cluster: ', counts)
-# 
-# p = np.argmax(counts)
-# 
-# print('Largest sampled cluster:', p)
-# print(Z[np.where(y == p)])
-# print('Mean:', np.mean(Z[np.where(y == p)], axis = 0), '\n')
-# 
-# #Test: removePoints
-# #Test: sample
-# print('Test removePoints.')
-# print('------------\n')
-# 
-# print('Data:')
-# print(data.X_, '\n')
-# 
-# idx = np.array([0, 1])
-# data.removePoints(idx)
-# 
-# print('New data:')
-# print(data.X_)
-# =============================================================================
-
-# =============================================================================
-# #Find clusering
-# km = KMeans(n_clusters=3, 
-#             init='random',
-#             n_init=10,
-#             max_iter=300,
-#             tol=1e-04,
-#             random_state=0)
-# 
-# y_km = km.fit_predict(data.X_)
-# 
-# plt.figure()
-# plt.scatter(data.X_[y_km == 0, 0], data.X_[y_km == 0, 1],
-#             s=50, 
-#             c='lightgreen', 
-#             marker='s', 
-#             edgecolor='black',
-#             label='cluster 1')
-# 
-# plt.scatter(data.X_[y_km == 1, 0], data.X_[y_km == 1, 1], 
-#             s=50, 
-#             c='orange', 
-#             marker='o', 
-#             edgecolor='black',
-#             label='cluster 2')
-# 
-# plt.scatter(data.X_[y_km == 2, 0], data.X_[y_km == 2, 1],
-#             s=50, 
-#             c='lightblue',
-#             marker='v', 
-#             edgecolor='black',
-#             label='cluster 3')
-# 
-# plt.scatter(km.cluster_centers_[:, 0], km.cluster_centers_[:, 1],
-#             s=250, 
-#             marker='*',
-#             c='red', 
-#             edgecolor='black',
-#             label='centroids')
-# 
-# plt.legend(scatterpoints=1)
-# plt.grid()
-# plt.show()
-# =============================================================================
-
+    def generateEllipsoidsGeneral(self):
+        """Generate the data
+    
+        Parameters
+        ------------
+        None
+        
+        Returns
+        ------------
+        self : object
+        """
+        
+        #Generate centers
+        c = np.zeros((self.k, 2))
+        c_x = np.linspace(0, self.k*10, self.k)
+        for i in range(self.k):
+            c[i, :] = [c_x[i], 1+np.random.normal()]
+        
+        X, y = make_blobs(n_samples=self.n, 
+                  n_features=self.d, 
+                  centers=self.k, 
+                  cluster_std=0.5, 
+                  shuffle=True) 
+                  #random_state=self.seed)
+            
+        #rng = np.random.RandomState(13)
+        for i in range(self.k):
+            X[y==i, :] = np.dot(X[y==i, :], np.random.rand(self.d, self.d))
+        
+        self.X_ = X
+        self.y_ = y
+        self.points_ = np.arange(self.n)
+    
+        return self

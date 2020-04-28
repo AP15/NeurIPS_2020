@@ -64,7 +64,8 @@ class SCQKmeansNP(object):
             mu_p = np.mean(Z[np.where(labels == p)], axis = 0)
             
             #Phase 2
-            dist_mu = np.linalg.norm(data.X_ - np.tile(mu_p, (data.X_.shape[0], 1)), axis = 1)
+            dist_mu = np.linalg.norm(
+                    data.X_ - np.tile(mu_p, (data.X_.shape[0], 1)), axis = 1)
             sort_idxs = np.argsort(dist_mu)
             dist_sort = dist_mu[sort_idxs]
             y_sort = data.y_[sort_idxs]        
@@ -77,30 +78,3 @@ class SCQKmeansNP(object):
                 break
         
         return C.astype(int)
-    
-    
-# =============================================================================
-#     def clusteringCompletion(self, data, C):
-#         n = data.n
-# =============================================================================
-        
-
-#Tests
-# =============================================================================
-# data = ds.Dataset(n=150, d=2, k=3)
-# data.generate()
-# data.scatterData()
-# 
-# =============================================================================
-
-# =============================================================================
-# data = ds.Dataset()
-# data.importFromFile('aggregation.txt')
-# 
-# data_p = copy.deepcopy(data)
-# 
-# alg = SCQKmeansNP()
-# C = alg.cluster(data_p, 3, 10)
-# print(C)
-# print(data.y_)
-# =============================================================================
