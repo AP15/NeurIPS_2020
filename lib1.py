@@ -140,7 +140,7 @@ class Cleaner:
         D, d = self.D, self.d
 
         # 1. discard points not in E
-        D = D[E.contains(D.iloc[:, :d])]
+        D = D[self.E.contains(D.iloc[:, :d])]
 
         # 2. label as True points in conv(SC)
         if len(self.SC) > d+1:
@@ -148,12 +148,10 @@ class Cleaner:
             self.H = H
             isInH = point_in_hull(D.iloc[:, :d], H)
             D.at[isInH,'Y'] = True
-#        return self.D
 
         # 3. tessellation
         T = Tessellation(self.E, self.Ein, self.gamma)
         R = T.classify(D.iloc[:, :d])
-#        print(R.shape, self.D.shape)
         D['R'] = [tuple(r) for r in R]
         D.sort_values(by=['R', 'Y'], inplace=True)
 
@@ -165,7 +163,6 @@ class Cleaner:
             G.at[idx,'Y'] = (idx%2==0) # just to get a mix of True/False
             #G.at[idx, 'Y'] = oracle.scq(x, idx)
         D.loc[G.index,'Y'] = G['Y']
-#        print(self.D)
 
         D.fillna(method='ffill', inplace=True)
         self.D = D
@@ -175,24 +172,23 @@ class Cleaner:
         pass
 
 
-n=10000
-d=10
-np.random.seed(0)
-X = np.random.normal(size=(n,d)) / np.sqrt(d)
-df = pd.DataFrame(X)
-E=Ellipsoid([0]*d, [1]*d)
-E1=Ellipsoid([0]*d, [.5]*d)
-SC=df[E1.contains(X)].sample(frac=.5).index
-df['Y'] = np.nan
-df.iloc[SC,-1] = True # SC
+def test():
+    import cProfile
+    import pstats
 
-import cProfile
-import pstats
+    n, d, gamma = 1000, 10, 0.2
+    np.random.seed(0)
+    X = np.random.normal(size=(n,d)) / np.sqrt(d)
+    df = pd.DataFrame(X)
+    E=Ellipsoid([0]*d, [1]*d)
+    E1=Ellipsoid([0]*d, [.3]*d)
+    SC=df[E1.contains(X)].sample(frac=.5).index
+    df['Y'] = np.nan
+    df.iloc[SC,-1] = True # SC
 
-# C=Cleaner(df, SC, E, 0.2, True)
-# D=C.clean()
-#print(D)
-
-cProfile.run("C=Cleaner(df, SC, E, 0.2, True)\nC.clean()", "clstats")
-p=pstats.Stats("clstats")
-p.sort_stats("cumulative").print_stats(10)
+    # C=Cleaner(df, SC, E, 0.2, True)
+    # D=C.clean()
+    #print(D)
+    cProfile.run("C=Cleaner(df, SC, E, %2f, True)\nC.clean()" % (gamma), "clstats")
+    p=pstats.Stats("clstats")
+    p.sort_stats("cumulative").print_stats(10)
