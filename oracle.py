@@ -33,7 +33,6 @@ class SCQ0racle(object):
         Return the cluster membership label of idx.
     getCount()
         Return #SCQs asked so far.
-    getFoundClusters()
     """
     
     def __init__(self, data):
