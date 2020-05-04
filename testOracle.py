@@ -13,7 +13,7 @@ df = pd.read_csv('https://archive.ics.uci.edu/ml/'
                  'machine-learning-databases/iris/iris.data', header=None)
 df.tail()
 
-batgirl = oracle.SCQ0racle(df)
+batgirl = oracle.SCQOracle(df)
 
 #Test scq
 print(df[4][0], df[4][30])

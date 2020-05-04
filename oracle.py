@@ -7,7 +7,7 @@ Created on Wed Apr 29 18:14:26 2020
 
 import numpy as np
 
-class SCQ0racle(object):
+class SCQOracle(object):
     """
     Same-Cluster-Query (SCQ) oracle.
     Given any pair (x,y) \in X, return True if C(x)=C(y) and False o.w.
