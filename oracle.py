@@ -1,7 +1,7 @@
+
 # -*- coding: utf-8 -*-
 """
 Created on Wed Apr 29 18:14:26 2020
-
 @author: apaudice
 """
 
@@ -15,10 +15,8 @@ class SCQOracle(object):
     
     Attributes
     ----------
-    data : pandas dataframe, shape = [#Points, #Features+1]
-        Input data for clustering.
-    dim : int
-        #Features = #Columns of data.  
+    labels : pandas dataframe, shape = [#Points, 1]
+        Ground truth labels.
     count : int
         #SCQs asked so far.
     foundClusters: list, shape <= #Clusters in data
@@ -45,16 +43,12 @@ class SCQOracle(object):
         ----------
         data : pandas dataframe, shape = [#Points, #Features+1]
             Input data for clustering. Last column contains the labels.
-
         Returns
         -------
         None.
-
         """
-#        self.data = data.copy()
+
         self.labels = data.iloc[:,-1].copy()
-#        self.data = data.iloc[:,:-1].copy()
-#        self.dim = len(self.data.columns)
         self.count = 0
         self.foundClusters = []
         
@@ -68,12 +62,10 @@ class SCQOracle(object):
             Id of a point x.
         idy : int
             Id of a point y.
-
         Returns
         -------
         boolean
             True if x and y have the same label, False otherwise.
-
         """
         self.count += 1
         return self.labels[idx] == self.labels[idy]
@@ -86,17 +78,14 @@ class SCQOracle(object):
         If the cluster of x has been already queried, then this query 
         counts as the index of label_x in foundClusters, otherwise
         it counts has len(foundClusters)
-
         Parameters
         ----------
         idx : int
             Id of a point x.
-
         Returns
         -------
         label_x : int
             Label of x.
-
         """
         label_x = self.labels[idx]
         if label_x in self.foundClusters:
@@ -111,12 +100,10 @@ class SCQOracle(object):
     def getCount(self):
         """
         Return the number of SCQs asked so far to the oracle.
-
         Returns
         -------
         int
             SCQs asked so far to the oracle.
-
         """
         return self.count
     

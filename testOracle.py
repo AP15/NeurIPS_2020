@@ -20,10 +20,10 @@ print(df[4][0], df[4][30])
 print(batgirl.scq(1, 30))
 print(batgirl.scq(5, 70))
 print(batgirl.scq(15, 90))
+print(batgirl.scq(0, 1))
 
 #Test getCount
 print('Count: ', batgirl.getCount())
-batgirl.getFoundClusters()
 
 #Test label
 print(batgirl.label(2))
