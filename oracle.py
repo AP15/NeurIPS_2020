@@ -51,8 +51,10 @@ class SCQOracle(object):
         None.
 
         """
-        self.data = data.copy()
-        self.dim = len(data.columns)
+#        self.data = data.copy()
+        self.labels = data.iloc[:,-1].copy()
+#        self.data = data.iloc[:,:-1].copy()
+#        self.dim = len(self.data.columns)
         self.count = 0
         self.foundClusters = []
         
@@ -74,7 +76,7 @@ class SCQOracle(object):
 
         """
         self.count += 1
-        return self.data[self.dim-1][idx] == self.data[self.dim-1][idy]
+        return self.labels[idx] == self.labels[idy]
     
     
     def label(self, idx):
@@ -96,7 +98,7 @@ class SCQOracle(object):
             Label of x.
 
         """
-        label_x = self.data[self.dim-1][idx]
+        label_x = self.labels[idx]
         if label_x in self.foundClusters:
             self.count += self.foundClusters.index(label_x)
         else:
