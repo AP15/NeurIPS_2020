@@ -7,10 +7,11 @@ Created on Wed Apr 29 09:56:14 2020
 
 import pandas as pd
 import numpy as np
-from scipy.spatial import ConvexHull
+from scipy.spatial.qhull import ConvexHull, QhullError
 import timeit
 import time
 import logging
+import oracle
 
 # from https://stackoverflow.com/questions/16750618/
 # def ppoint_in_hull(point, hull, tolerance=1e-12):
@@ -244,7 +245,7 @@ class Cleaner:
         self.gamma=gamma
         self.logger=logging.getLogger()
         self.logger.setLevel(logLevel)
-        
+
     def getPositives(self):
         return self.D.loc[self.D.iloc[:,self.d]==True]
 
@@ -393,7 +394,10 @@ class Cleaner:
             if maxpoints > 0 and maxpoints < X.shape[0]:
                 X=X.sample(int(maxpoints))
             self.logger.debug("building convex hull on %d points... " % len(X))
-            H=ConvexHull(np.r_[(1+step)*X, [self.orig]])
+            try:
+                H=ConvexHull(np.r_[(1+step)*X, [self.orig]])
+            except QhullError:
+                return # set of points is degenerate
             self.logger.debug("done")
             U=self.getUnlabeled().iloc[:,:self.d] # points to test
             I=self.findPointsInHull(H,U) # index of points in hull
@@ -403,12 +407,12 @@ class Cleaner:
         self.logger.debug("%d iterations" % (itr,))
 
 
-    def tessellationClean(self, O=None):
+    def tessellationClean(self, oc=None):
         """Classify points via hyperrectangle tessellation and oracle queries.
 
         Parameters
         ----------
-        O : Oracle
+        oc : SCQOracle
             The same-cluster-query oracle. Must provide a method scq(ix,iy) that
             tells whether points ix and iy are in the same cluster.
         """
@@ -429,13 +433,13 @@ class Cleaner:
         G=self.D.groupby('R').head(1) # group points by rectangle, pick first point
         Q=G.loc[G.iloc[:,self.d].isna()] # for these points, the rectangle has no labeled point
 #        print(Q)
-        xref=self.getPositives()[:1].iloc[:,:self.d] # for comparison, this point is in C
+        iC=self.getPositives().index[0] # for comparison, this point is in C
         self.logger.debug("there are %d rectangles of which %d unlabeled" % (len(G),len(Q)))
 #        return
         for idx, row in Q.iterrows():
             # learn label of point
             self.logger.debug("learning label of rectangle %s from point #%d" % (Q.loc[idx,'R'],idx))
-            label=True # replace with Oracle call
+            label=oc.scq(iC, idx) # replace with Oracle call
             if label:
                 self.setPositive([idx])
             else:
