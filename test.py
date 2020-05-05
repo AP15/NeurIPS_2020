@@ -3,11 +3,23 @@ from Dataset import Dataset
 import numpy as np, pandas as pd
 import qinfer.utils as qut
 import scipy.linalg
+import matplotlib.pyplot as plt
 
 np.random.seed(0)
 n,d,k=100000,2,3
 ds=Dataset(n,d,k)
-ds.generate()
+ds.generateEllipsoids()
+ds.randomRotateAndStretch()
+
+plot=False
+if d==2 and plot:
+    ms = 5  # marker size
+    fig, ax1 = plt.subplots()
+    ax1.scatter(ds.X_[:,0], ds.X_[:,1], s=ms, c=ds.y_)
+#    ax2.scatter(df[0], df[1], s=ms, c='orange')
+#    P = df.loc[C.getPositives().index]
+#    ax2.scatter(P[0], P[1], c='black', s=ms)
+    plt.show(block=False)
 
 orcl=oracle.SCQOracle(pd.DataFrame(ds.y_)) # the oracle
 

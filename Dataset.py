@@ -9,6 +9,7 @@ import numpy as np
 from scipy.stats import random_correlation
 from sklearn.datasets import make_blobs
 import matplotlib.pyplot as plt
+import scipy.linalg
 
 class Dataset(object):
     """Synthetic Data generated from a mixture of gaussian.
@@ -231,3 +232,33 @@ class Dataset(object):
         self.points_ = np.arange(self.n)
     
         return self
+
+    def randomRotateAndStretch(self, all_same=True):
+        """Apply a random rotation+stretch to the data.
+
+        Parameters
+        ----------
+        all_same : bool, optional
+            Whether to apply the same transformation to all clusters (default is True).
+            If False, then every cluster is transformed according to a matrix drawn
+            independently at random. Note this may result in overlapping clusters.
+
+        Returns
+        -------
+        The transformation matrix R. If all_same=True then R is a list with one element per cluster.
+
+        """
+        if all_same:
+            M = np.random.uniform(low=-10, high=10, size=(self.d, self.d))
+            R = np.dot(M, M.transpose())
+            self.X_ = np.dot(self.X_, R)
+            return R
+        else:
+            # random rotation and stretch for every cluster independently
+            Rs = []
+            for i in np.unique(self.y_):
+                M = np.random.uniform(low=-10, high=10, size=(self.d, self.d))
+                R = np.dot(M, M.transpose())
+                Rs += [R]
+                self.X_[self.y_ == i] = np.dot(self.X_[self.y_ == i], R)
+            return Rs
