@@ -6,10 +6,14 @@ import scipy.linalg
 import matplotlib.pyplot as plt
 
 np.random.seed(0)
-n,d,k=100000,2,3
+n,d,k=100000,3,3
 ds=Dataset(n,d,k)
-ds.generateEllipsoids()
+ds.generateEllipsoidsGeneral()
 ds.randomRotateAndStretch()
+gamma=1
+
+# for the rank
+#scipy.linalg.orth(XSC.values[:2].transpose()).transpose()
 
 plot=False
 if d==2 and plot:
@@ -27,7 +31,6 @@ X=pd.DataFrame(ds.X_) # our unlabeled dataset
 X['y']=np.nan
 
 U=X.copy() # the yet unlabeled elements
-gamma=.2
 
 while not U.empty:
     print("%d points left" % U.shape[0])
@@ -67,7 +70,7 @@ while not U.empty:
     # 4. Remove false positives
 #    print("removing false positives...")
     cleaner=cleaning.Cleaner(D,E,gamma)
-    cleaner.greedyHull()
+    cleaner.greedyHull(step=gamma/2)
     cleaner.tessellationClean(orcl)
     print("%d points labeled as %d" %(cleaner.getPositives().shape[0], C))
 
