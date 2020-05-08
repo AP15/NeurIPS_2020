@@ -12,6 +12,7 @@ import timeit
 import time
 import logging
 import oracle
+import ellipsoid as ell
 
 # from https://stackoverflow.com/questions/16750618/
 # def ppoint_in_hull(point, hull, tolerance=1e-12):
@@ -38,58 +39,6 @@ def point_in_hull(X, H, tolerance=1e-12):
 
     M=np.c_[X, np.ones((X.shape[0],1))]
     return np.all(np.dot(M, H.equations.transpose()) <= tolerance, axis=1)
-
-class Ellipsoid:
-    """Axis-aligned d-dimensional ellipsoid.
-
-    Attributes
-    ----------
-    mu : numpy.ndarray
-        Center of the ellipsoid
-    l : numpy.ndarray
-        Length of semiaxes
-    eig : numpy.ndarray
-        Eigenvalues, that is, 1/l**2
-    """
-
-    def __init__(self, mu, l=None, eig=None):
-        self.mu=np.array(mu, dtype=float)
-        self.d = len(self.mu)
-        if l is None and eig is None:
-            raise Exception("One between semiaxes length and eigenvalues must be specified.")
-        if l is not None:
-            self.l = np.array(l, dtype=float)
-            self.eig = 1.0/self.l**2
-        if eig is not None:
-            self.eig = np.array(eig, dtype=float)
-            self.l = 1.0/np.sqrt(self.eig)
-    
-    def __str__(self):
-        return "center: " + np.array_str(self.mu) + "\nsemiaxes: " + np.array_str(self.l) + "\neigenvalues: " + np.array_str(self.eig)
-
-    def rescale(self, by=1):
-        """Rescale the ellipsoid by the specified factor about its center.
-        """
-
-        self.l*=by
-        self.eig*=1.0/by**2
-        
-    def contains(self, x):
-        """Tells whether x is contained in E.
-        """
-
-        return np.dot((np.array(x)-self.mu)**2,self.eig)<= 1
-
-    def move_to(self, new_mu):
-        self.mu = np.array(new_mu)
-
-#def testEllipsoid():
-#    E = Ellipsoid([0,0], [1,1])
-#    E.contains([1,1])
-#    E.contains([1/2,-1/2])
-#    E = Ellipsoid([0,0], eig=[4,4])
-#    E.contains([-1/2,0])
-#    E.contains([-1/2,0.1])
 
 
 class Tessellation:
@@ -238,8 +187,8 @@ class Cleaner:
 
         self.D=D.copy()
         self.d=self.D.shape[1]-1 if d is None else d
-        self.E=Ellipsoid(E.mu, E.l)
-        self.Ein=Ellipsoid(E.mu, E.l/self.d)
+        self.E=ell.Ellipsoid(E.mu, E.l)
+        self.Ein=ell.Ellipsoid(E.mu, E.l/self.d)
         self.D.iloc[:,:self.d]=self.D.iloc[:,:self.d]-E.mu # set origin at the center of E
         self.orig=np.zeros(self.d) # now set origin at zero
         self.gamma=gamma
@@ -433,7 +382,7 @@ class Cleaner:
         G=self.D.groupby('R').head(1) # group points by rectangle, pick first point
         Q=G.loc[G.iloc[:,self.d].isna()] # for these points, the rectangle has no labeled point
 #        print(Q)
-        iC=self.getPositives().index[0] # for comparison, this point is in C
+        iC = self.getPositives().index[0] # for comparison, this point is in C
         self.logger.debug("there are %d rectangles of which %d unlabeled" % (len(G),len(Q)))
 #        return
         for idx, row in Q.iterrows():
@@ -465,7 +414,7 @@ def test(n=1000, d=2, gamma=.2, seed=0, plot=False):
     X=X/np.linalg.norm(X,axis=1).reshape((n,1))
     X=sigma*X[:,:d]
 
-    E=Ellipsoid([0]*d, l=sigma) # simulate E containing most points
+    E=ell.Ellipsoid([0]*d, l=sigma) # simulate E containing most points
     #X=X[E.contains(X)]
 
     df=pd.DataFrame(X)
