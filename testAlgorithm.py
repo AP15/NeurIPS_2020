@@ -17,11 +17,11 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-np.random.seed(0)
-n, d, k = 100000, 2, 10
-ds = data.Dataset(n,d,k)
-ds.generateEllipsoids()
-#ds.randomRotateAndStretch()
+#np.random.seed(0)
+n, d, k = 100, 3, 3
+gamma = .2
+ds = data.Dataset(n, d, k)
+ds.generateEllipsoidsGeneral()
 
 plot = True
 if d==2 and plot:
@@ -34,14 +34,8 @@ O = oracle.SCQOracle(pd.DataFrame(ds.y_))
 X = pd.DataFrame(ds.X_) # our unlabeled dataset
 X['y']=np.nan
 
-gamma=.2
-
-# Test cluster
-alg = ecc.ECC(k, gamma)
-C, n_queries = alg.cluster(X, O)
-
-print("#Queries: %d" % n_queries)
-print("Accuracy: %2f" % (sum(C==ds.y_)/n))
+print(ds.y_)
+print(X)
 
 # Test cluster
 alg = ecc.ECC(k, gamma)

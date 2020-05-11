@@ -15,7 +15,6 @@ import copy
 n_exp = 10
 rep = 50
 
-B = np.linspace(1, np.log(data.n), n_exp)
 scores = np.zeros((rep, n_exp))
 
 alg = SCQKmeans_np.SCQKmeansNP()
@@ -25,7 +24,8 @@ alg = SCQKmeans_np.SCQKmeansNP()
 # data =  ds.Dataset()
 # data.importFromFile('aggregation.txt')
 # data.scatterData()
-#  
+# B = np.linspace(1, np.log(data.n), n_exp)
+# 
 # for i in range(rep):
 #     for j in range(n_exp):
 #         data_p = copy.deepcopy(data)
@@ -34,14 +34,14 @@ alg = SCQKmeans_np.SCQKmeansNP()
 #         scores[i, j] = accuracy_score(data.y_, y_pred)
 # =============================================================================
 
-
-
 #ellipsoid
-data =  ds.Dataset(n=10000, d=2, k=5)
+data =  ds.Dataset(n=10000, d=100, k=10)
 #data.generateEllipsoids()
-#data.generateEllipsoidsGeneral()
-data.generate()
-data.scatterData()
+data.generateEllipsoidsGeneral()
+#data.generate()
+#data.scatterData()
+
+B = np.linspace(1, np.log(data.n), n_exp)
 
 for i in range(rep):
     for j in range(n_exp):
@@ -59,6 +59,9 @@ plt.plot(B*data.k**2, np.mean(scores, axis = 0))
 plt.fill_between(B*data.k**2, np.mean(scores, axis = 0) - np.std(scores, axis = 0)/2, 
                  np.mean(scores, axis = 0) + np.std(scores, axis = 0)/2, 
                  facecolor='blue', alpha=0.5)
+
+plt.ylim(0, 1.2)
+
 plt.xlabel('Queries')
 plt.ylabel('Accuracy')
 plt.grid()

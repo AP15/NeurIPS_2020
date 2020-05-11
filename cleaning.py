@@ -393,7 +393,8 @@ class Cleaner:
                 self.setPositive([idx])
             else:
                 self.setNegative([idx])
-        self.D.fillna(method='ffill', inplace=True)
+        self.D.iloc[:,self.d].fillna(method='ffill', inplace=True)
+        #self.D.fillna(method='ffill', inplace=True)
         self.logger.info("queried %d points " % len(Q))
         # restore original order, remove rectangle column
         self.D.sort_index(inplace=True)

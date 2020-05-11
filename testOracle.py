@@ -7,7 +7,7 @@ Created on Wed Apr 29 19:16:08 2020
 
 import oracle
 import pandas as pd
-
+import numpy as np
 
 df = pd.read_csv('https://archive.ics.uci.edu/ml/'
                  'machine-learning-databases/iris/iris.data', header=None)

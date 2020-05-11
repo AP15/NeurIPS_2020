@@ -1,21 +1,23 @@
-from Dataset import Dataset
-import numpy as np, pandas as pd
+# -*- coding: utf-8 -*-
+"""
+Created on Fri May  8 10:46:29 2020
+
+@author: Marco Bressan
+"""
+
+import numpy as np 
 import scipy.linalg
 import scipy.spatial
-from scipy.stats import special_ortho_group
 
 
 def normalize(x, lo: float = 0, hi: float = 1):
     """Normalize an array to a given range.
-
     Parameters
     ----------
     lo
     hi
-
     Returns
     -------
-
     """
     if np.max(x)==np.min(x):
         return lo*x/np.max(x)
@@ -25,17 +27,14 @@ def normalize(x, lo: float = 0, hi: float = 1):
 
 def rsphere(d: int, n: int = 1):
     """Draw vectors from the spherical distribution.
-
     Parameters
     ----------
     d : int
         dimension
     n : int
         number of samples, default is 1
-
     Returns
     -------
-
     """
 
     P=np.random.normal(size=(n, d))
@@ -44,17 +43,14 @@ def rsphere(d: int, n: int = 1):
 
 def rball(d: int, n: int = 1):
     """Draw vectors uniformly from the unit ball.
-
     Parameters
     ----------
     d : int
         dimension
     n : int
         number of samples, default is 1
-
     Returns
     -------
-
     """
 
     P=np.random.normal(size=(n, d+2), scale=1)
@@ -64,14 +60,12 @@ def rball(d: int, n: int = 1):
 
 def randomPSD(d: int, cn: float = 1.0):
     """Generate a random PSD matrix.
-
     Parameters
     ----------
     d : int
         Side of the matrix
     cn : float
         Condition number
-
     Returns
     -------
     X : numpy.ndarray
@@ -89,7 +83,6 @@ def randomPSD(d: int, cn: float = 1.0):
 
 def randomCluster(n: int, d: int, r: int = None):
     """Generate a random cluster in R^d with rank r.
-
     Parameters
     ----------
     n : int
@@ -98,7 +91,6 @@ def randomCluster(n: int, d: int, r: int = None):
         dimensionality of ambient space
     r : int
         rank of subspace spanned by the cluster
-
     Returns
     -------
     X : numpy.ndarray
@@ -114,7 +106,6 @@ def randomCluster(n: int, d: int, r: int = None):
 
 def toLatent(X, W, c):
     """Map to the latent space.
-
     Parameters
     ----------
     X: numpy.ndarray
@@ -123,7 +114,6 @@ def toLatent(X, W, c):
         A d-by-d matrix specifying the transformation
     c: numpy.ndarray
         A d-size array giving the center of the transformation
-
     Returns
     -------
     The inner product of W and (X-c). In other words, set the origin in c and then apply W.
@@ -134,7 +124,6 @@ def toLatent(X, W, c):
 
 def toVisible(X, W, c):
     """Reverse of toLatent(X, W, C).
-
     Parameters
     ----------
     X: numpy.ndarray
@@ -143,7 +132,6 @@ def toVisible(X, W, c):
         A d-by-d matrix specifying the transformation
     c: numpy.ndarray
         A d-size array giving the center of the transformation
-
     Returns
     -------
     The inner product of W^(-1) and X, plus c. In other words, apply the inverse of W and shift by c.
@@ -153,18 +141,15 @@ def toVisible(X, W, c):
 
 def clusterMargins(X, y, Ws, cs):
     """Compute the (latent) margins of the clusters.
-
     Parameters
     ----------
     X
     y
     Ws
     cs
-
     Returns
     -------
     For each cluster, the ratio between the closest external point and the cluster's radius.
-
     """
     g=np.zeros(len(Ws))
     d=X.shape[1]
@@ -180,7 +165,6 @@ def clusterMargins(X, y, Ws, cs):
 def randomDataset(n: int, k: int, d: int, gamma: float = 0.5, r: int = None, cn: float = None,
                   tightMargin: bool = False):
     """Generate a random dataset controlling the clusters' rank, margin, and stretch.
-
     Parameters
     ----------
     n : int
@@ -197,7 +181,6 @@ def randomDataset(n: int, k: int, d: int, gamma: float = 0.5, r: int = None, cn:
         Condition number of the PSD matrices of clusters. A higher value means higher stretch.
     tightMargin : bool
         Whether to tighten the margin around gamma (default is False)
-
     Returns
     -------
     X : numpy.ndarray

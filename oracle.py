@@ -15,7 +15,7 @@ class SCQOracle(object):
     
     Attributes
     ----------
-    labels : pandas dataframe, shape = [#Points, 1]
+    labels : numpy array, shape = [#Points]
         Ground truth labels.
     count : int
         #SCQs asked so far.
@@ -41,7 +41,7 @@ class SCQOracle(object):
         
         Parameters
         ----------
-        data : pandas dataframe, shape = [#Points, #Features+1]
+        data : pandas series, shape = [#Points, #Features+1]
             Input data for clustering. Last column contains the labels.
         Returns
         -------
@@ -95,7 +95,7 @@ class SCQOracle(object):
             self.foundClusters.append(label_x)
             self.foundClusters.sort()
         return label_x
-    
+
     
     def getCount(self):
         """

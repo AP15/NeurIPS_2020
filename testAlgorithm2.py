@@ -17,10 +17,10 @@ import oracle
 warnings.filterwarnings("ignore")
 
 #np.random.seed(0)
-n_p = 1000
-n_k = 3
+n_p = 10000
+n_k = 5
 g = .5
-dim = 10
+dim = 15
 rank = dim
 X_, y_, Ws, cs = datagen.randomDataset(n=n_p, k=n_k, d=dim, gamma=g, 
                                        tightMargin=True)
