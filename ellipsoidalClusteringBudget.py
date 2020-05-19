@@ -35,21 +35,9 @@ class ECC(object):
         """
         
         
-        def __init__(self, k, d, gamma):
+        def __init__(self, k, gamma):
             self.k = k
-            self.d = d
             self.gamma = gamma
-            
-
-        def conditionMVE(self, M):
-            tol = 0
-            eigVals, eigVecs = np.linalg.eig(M)
-            #print('MVE: ', M)
-            print('Eigenvalues: ', eigVals)
-            eigVals[eigVals < 0] = 10000000000000000000000
-            eigVals = np.diag(eigVals)
-            eigVecs_inv = np.linalg.inv(eigVecs)
-            return np.linalg.multi_dot([eigVecs, eigVals, eigVecs_inv])
               
         
         def findSeparator(self, X, S_C, S, data):
@@ -86,7 +74,7 @@ class ECC(object):
             return cleaner.getPositives().index               
  
 
-        def cluster(self, data, oracle):
+        def cluster(self, data, oracle, B):
             #Get active nodes      
             activeNodes = data.copy()
             n = activeNodes.shape[0]  
@@ -96,10 +84,10 @@ class ECC(object):
                 print("%d points left to cluster." % n)
                 # 1. Sample
                 print("1. Taking samples")
-                B = min(n, 10 * self.k * self.d)
-                S = activeNodes.sample(B).index
+                L = min(n, 10 * self.k)
+                S = activeNodes.sample(L).index
                 S_labels = np.array([oracle.label(i) for i in S]) 
-                if B==n: # we have labeled all of X
+                if L==n: # we have labeled all of X
                     C[S]=S_labels
                     break
                 C[S] = S_labels
@@ -123,5 +111,9 @@ class ECC(object):
                 C[pos_idxs] = p
                 activeNodes = data.loc[np.isnan(C)]
                 n = activeNodes.shape[0]
+                
+                if (oracle.getCount() > B):
+                    print('Budget exhausted.')
+                    break
                 
             return C, oracle.getCount()               

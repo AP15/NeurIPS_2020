@@ -53,6 +53,30 @@ class BinSearch(object):
                 r = mid-1   
         
         return radius
+    
+    
+    def findRaySCQ(self, dist, oracle, idxs, cluster_id):
+        
+        l = 0
+        r = dist.size-1
+        radius = dist[0]
+        # Check base case 
+        while(r >= l): 
+  
+            mid = l + (r - l)//2
+  
+            # If element is present at the middle itself 
+            #print(idxs[mid], cluster_id)
+            if oracle.scq(idxs[mid], cluster_id): 
+                radius = dist[mid]
+                l = mid+1
+          
+            # If element is smaller than mid, then it can only 
+            # be present in left subarray 
+            else: 
+                r = mid-1   
+        
+        return radius
 
        
 # =============================================================================

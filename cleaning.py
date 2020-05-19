@@ -13,6 +13,7 @@ import time
 import logging
 import oracle
 import ellipsoid as ell
+import tessellation
 
 # from https://stackoverflow.com/questions/16750618/
 # def ppoint_in_hull(point, hull, tolerance=1e-12):
@@ -39,97 +40,6 @@ def point_in_hull(X, H, tolerance=1e-12):
 
     M=np.c_[X, np.ones((X.shape[0],1))]
     return np.all(np.dot(M, H.equations.transpose()) <= tolerance, axis=1)
-
-
-class Tessellation:
-    """Tessellation of the space between two ellipsoids.
-
-    Attributes
-    ----------
-    E : Ellipsoid
-        The outer bounding ellipsoid
-    Ein : Ellipsoid
-        The inner bounding ellipsoid
-    d : int
-        Dimensionality of data
-    gamma : float
-        Margin of cluster
-    a : float
-        The rectangle increment step
-    L : numpy.ndarray
-        The semiaxes lengths of E
-    beta : numpy.ndarray
-        The boundary of the first rectangle along each axis
-    b : int
-        The number of intervals along each axis
-    T : list
-        The i-th element is the list of intervals along the i-th axis
-    """
-
-    def __init__(self, E, Ein, gamma):
-        """Construct a tessellation.
-
-        Parameters
-        ----------
-        E : Ellipsoid
-            The outer bounding ellipsoid
-        Ein : Ellipsoid
-            The inner bounding ellipsoid
-        gamma : float
-            The margin
-        """
-
-        self.E = E
-        self.Ein = Ein
-        self.d = self.E.mu.shape[-1]
-        self.gamma = gamma
-        self.a = np.sqrt((1+self.gamma)/2)
-        self.L = self.E.l
-        self.beta = self.L * np.sqrt(self.gamma/2)/self.d
-        self.b = int(np.ceil(np.log(self.L[0]/self.beta[0]) / np.log(1+self.a)))
-        self.T = []
-        for i in range(self.d):
-            # for each axis build the list of intervals, t
-            t = [np.array([0, self.beta[i]])]
-            t = t + [self.beta[i]*np.array([(1+self.a)**j, (1+self.a)**(j+1)]) for j in range(self.b-1)]
-            self.T.append(t)
-    
-    def findRectangle(self, x):
-        """Find the rectangle the point lies in.
-
-        Parameters
-        ----------
-        x : numpy.ndarray
-            A d-dimensional array
-
-        Returns
-        -------
-        r : tuple
-            A d-dimensional tuple identifying the rectangle containing x.
-            For instance, (0,1,0) identifies the rectangle formed by the
-            cartesian product: T[0] x T[1] x T[2]; see the T attribute.
-        """
-
-        # center; map in the positive orthant; clip to avoid log(0) below
-        x = x.copy()
-        x = np.abs(np.array(x)-self.E.mu.clip(min = self.beta/2))
-        lg = np.log(x/self.beta)/np.log(1+self.a) # convert to id
-        r = np.floor(lg).clip(min=0).astype(int) # ceiling and saturation at 0
-        return r
-
-    def getRectangleCoords(self, rectId):
-        """Return the intervals for the given rectangle
-        """
-        return [self.T_[i][rectId[i]] for i in range(self.d_)]
-
-    def findPoints(self, R, X):
-        """Return the indices of all points of X in rectangle R
-        """
-        pass
-
-# E = Ellipsoid([0,0], [5,5])
-# Ein = Ellipsoid([0,0], [1,1])
-# T = Tessellation(E, Ein, .5)
 
 class Cleaner:
     """Find points that belong to a cluster by tessellating with hyperrectangles.
@@ -371,7 +281,7 @@ class Cleaner:
             return
         self.logger.info("starting tessellation")
         # 1. build tessellation
-        self.T=Tessellation(self.E,self.Ein,self.gamma)
+        self.T=tessellation.Tessellation(self.E,self.Ein,self.gamma)
         R=self.T.findRectangle(self.D.iloc[:,:self.d].abs()) # map points to rectangles
         self.D['R']=[tuple(r) for r in R]
         self.D.sort_values(by=self.D.columns[self.d],inplace=True) # sort by label so that NA will be last

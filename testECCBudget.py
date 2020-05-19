@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu May  7 15:06:40 2020
+Created on Tue May 19 12:26:25 2020
 
 @author: apaudice
 """
@@ -10,7 +10,7 @@ import pandas as pd
 import warnings
 import matplotlib.pyplot as plt
 import datagen
-import ellipsoidalClustering as ecc
+import ellipsoidalClusteringBudget as ecc
 import oracle
 
 #Suppress Warnings
@@ -20,7 +20,7 @@ warnings.filterwarnings("ignore")
 n_p = 100000
 n_k = 5
 g = .5
-dim = 15
+dim = 2
 rank = dim
 X_, y_, Ws, cs = datagen.randomDataset(n=n_p, k=n_k, d=dim, gamma=g, 
                                        tightMargin=True)
@@ -36,9 +36,13 @@ O = oracle.SCQOracle(pd.DataFrame(y_))
 X = pd.DataFrame(X_) # Our unlabeled dataset
 X['y'] = np.nan
 
+n = X_.shape[0]
+B = int(10*np.log(n)*n_k)
+print(B)
+
 # Test cluster
 alg = ecc.ECC(n_k, g)
-C, n_queries = alg.cluster(X, O, dim)
+C, n_queries = alg.cluster(X, O, B)
 
 print("#Queries: %d" % n_queries)
 print("Accuracy: %2f" % (sum(C==y_)/n_p))
