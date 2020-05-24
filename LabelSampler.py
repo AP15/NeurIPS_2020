@@ -39,6 +39,17 @@ class LabelSampler:
     """
 
     def __init__(self, oc: SCQOracle, t: int = 1):
+        """
+
+        Parameters
+        ----------
+        oc: SCQOracle
+            an oracle that supports label() queries
+        t: int
+            label sample size threshold
+
+        Builds a sampler that will return samples as soon as some label get samples ≥ t times.
+        """
         self.oc = oc
         self.samples = set()  # plain samples
         self.sample_dict = {}  # each label to its samples
@@ -47,6 +58,8 @@ class LabelSampler:
         self.ms = -1  # the samples in class self.ms_l
 
     def update_largest_sample(self):
+        """For internal use.
+        """
         mss = [len(s) for s in self.sample_dict.values()]
         if mss:
             self.ms_l = np.argmax(mss)
@@ -55,7 +68,7 @@ class LabelSampler:
             self.ms = self.ms_l = -1
 
     def drop_samples(self, ds: pd.DataFrame):
-        """Drop all samples that are not in the specified dataset.
+        """Drop all samples that are not in the specified dataset. For internal use.
 
         Parameters
         ----------
@@ -69,14 +82,18 @@ class LabelSampler:
         self.update_largest_sample()
 
     def sample(self, ds: pd.DataFrame, t: int = None):
-        """Sample from a dataset.
+        """Sample t points with the same label from a dataset.
+
+        This method takes samples from a dataset until some label appears
+        in at least t samples. That label and its points are then returned.
+        If dataset is not large enough then points will be returned earlier.
 
         Parameters
         ----------
         ds: DataFrame
-            points to sample from (e.g. unlabeled ones), last column must be the label
+            points to sample from
         t: threshold
-            if specified, overrides the one passed to the constructor
+            overrides the constructor (see its documentation)
 
         Returns
         -------
