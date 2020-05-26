@@ -8,6 +8,7 @@ Created on Fri May  8 10:46:29 2020
 import numpy as np 
 import scipy.linalg
 import scipy.spatial
+from sklearn.datasets import make_moons as moons
 
 
 def normalize(x, lo: float = 0, hi: float = 1):
@@ -99,6 +100,30 @@ def randomCluster(n: int, d: int, r: int = None):
 
     r=d if r is None else r
     P=rball(r, n)
+    Pd=np.pad(P, [(0, 0), (0, d-r)], mode='constant')
+    Pd/=np.max(np.linalg.norm(Pd, axis=1))
+    return Pd
+
+
+def randomClusterMoons(n: int, d: int, r: int = None):
+    """Generate a random cluster in R^d with rank r.
+    Parameters
+    ----------
+    n : int
+        number of points
+    d : int
+        dimensionality of ambient space
+    r : int
+        rank of subspace spanned by the cluster
+    Returns
+    -------
+    X : numpy.ndarray
+        An n-by-d array containing the cluster points
+    """
+
+    r=d if r is None else r
+    P, y = moons(n_samples=n, noise=0.00)
+    P = P[y==0]
     Pd=np.pad(P, [(0, 0), (0, d-r)], mode='constant')
     Pd/=np.max(np.linalg.norm(Pd, axis=1))
     return Pd
@@ -200,7 +225,7 @@ def randomDataset(n: int, k: int, d: int, gamma: float = 0.5, r: int = None, cn:
     Ws=[randomPSD(d) if cn is None else randomPSD(d, cn) for i in range(k)]  # random PSD matrices
     cs=rball(d, k)  # random centers
     for i in range(k):
-        nk=(n-X.shape[0])//(k-i)  # cluster size
+        nk=int(n/k)#(n-X.shape[0])//(k-i)  # cluster size
         y=np.r_[y, i*np.ones(nk)]
         # move to the latent metric of C
         csLat=toLatent(cs, Ws[i], cs[i])
@@ -210,7 +235,84 @@ def randomDataset(n: int, k: int, d: int, gamma: float = 0.5, r: int = None, cn:
         gap=np.min(D)  # distance of closest point
         # generate cluster
         P=randomCluster(nk, d, r)
-        P*=2*gap/np.max(np.linalg.norm(P, axis=1))  # rescale a bit
+        #P*=2*gap/np.max(np.linalg.norm(P, axis=1))  # rescale a bit
+        P*=gap/10/d/np.max(np.linalg.norm(P, axis=1)) # rescale a bit
+        # convert cluster to visible space and add it
+        X=np.r_[X, toVisible(P, Ws[i], cs[i])]  # if X.shape[0]>0 else P
+    y=y.astype(int)
+
+    # Adjust margins if too small
+    m=clusterMargins(X, y, Ws, cs)
+
+    while min(m)<np.sqrt(1+gamma):
+        i=np.argmin(m)
+        X[y==i]=toVisible(toLatent(X[y==i], Ws[i], cs[i])*(0.99*m[i])/np.sqrt(1+gamma), Ws[i], cs[i])
+        m=clusterMargins(X, y, Ws, cs)
+
+    if tightMargin:
+        while max(m)>1.01*np.sqrt(1+gamma):
+            i=np.argmax(m)
+            X[y==i]=toVisible(toLatent(X[y==i], Ws[i], cs[i])*m[i]/np.sqrt(1+gamma), Ws[i], cs[i])
+            m=clusterMargins(X, y, Ws, cs)
+
+    while min(m)<np.sqrt(1+gamma):
+        i=np.argmin(m)
+        X[y==i]=toVisible(toLatent(X[y==i], Ws[i], cs[i])*(0.99*m[i])/np.sqrt(1+gamma), Ws[i], cs[i])
+        m=clusterMargins(X, y, Ws, cs)
+
+    return X, y.astype(int), Ws, cs
+
+
+def randomDatasetMoons(n: int, k: int, d: int, gamma: float = 0.5, r: int = None, cn: float = None,
+                  tightMargin: bool = False):
+    """Generate a random dataset controlling the clusters' rank, margin, and stretch.
+    Parameters
+    ----------
+    n : int
+        Number of points
+    k : int
+        Number of clusters
+    d : int
+        Dimension of ambient space
+    gamma : float
+        Margin
+    r : int
+        Rank of clusters
+    cn : float
+        Condition number of the PSD matrices of clusters. A higher value means higher stretch.
+    tightMargin : bool
+        Whether to tighten the margin around gamma (default is False)
+    Returns
+    -------
+    X : numpy.ndarray
+        an n-by-d array of the input points
+    y : numpy.ndarray
+        a length-h array containing the cluster labels
+    Ws : list
+        list of PSD matrices, one per cluster
+    cs : list
+        list of centers, one per cluster
+    """
+
+    if r is None:
+        r=d
+    X=np.zeros((0, d))
+    y=np.zeros(0)
+    Ws=[randomPSD(d) if cn is None else randomPSD(d, cn) for i in range(k)]  # random PSD matrices
+    cs=rball(d, k)  # random centers
+    for i in range(k):
+        nk=int(n/k)#(n-X.shape[0])//(k-i)  # cluster size
+        y=np.r_[y, i*np.ones(nk)]
+        # move to the latent metric of C
+        csLat=toLatent(cs, Ws[i], cs[i])
+        XLat=toLatent(X, Ws[i], cs[i])  # center and transform
+        # distance to other points, including centers of future clusters
+        D=np.linalg.norm(np.r_[XLat, csLat[i+1:]], axis=1)
+        gap=np.min(D)  # distance of closest point
+        # generate cluster
+        P=randomClusterMoons(2*nk, d, r)
+        #P*=2*gap/np.max(np.linalg.norm(P, axis=1))  # rescale a bit
+        P*=gap/10/d/np.max(np.linalg.norm(P, axis=1)) # rescale a bit
         # convert cluster to visible space and add it
         X=np.r_[X, toVisible(P, Ws[i], cs[i])]  # if X.shape[0]>0 else P
     y=y.astype(int)

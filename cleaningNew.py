@@ -14,6 +14,7 @@ import logging
 import oracle
 import ellipsoid as ell
 import tessellation
+from SignedTessellation import SignedTessellation
 
 # from https://stackoverflow.com/questions/16750618/
 # def ppoint_in_hull(point, hull, tolerance=1e-12):
@@ -141,7 +142,7 @@ class Cleaner:
             step=self.gamma/2
         self.logger.info("START greedy point expansion with step 1+%2f" % step)
         D, d = self.D, self.d
-        D.iloc[:,:d] = (D.iloc[:,:d]-self.E.mu).abs() # center and take absolute value
+        D.iloc[:,:d] = (D.iloc[:,:d]-self.E.mu) #.abs() # center and take absolute value
         U=self.getUnlabeled() # yet unlabeled points
         active=set(self.getPositives().index)
         itr=nc=0
@@ -281,8 +282,10 @@ class Cleaner:
             return
         self.logger.info("starting tessellation")
         # 1. build tessellation
-        self.T=tessellation.Tessellation(self.E,self.Ein,self.gamma)
-        R=self.T.findRectangle(self.D.iloc[:,:self.d].abs()) # map points to rectangles
+#        self.T=tessellation.Tessellation(self.E,self.Ein,self.gamma)
+#        R=self.T.findRectangle(self.D.iloc[:,:self.d].abs()) # map points to rectangles
+        self.T=SignedTessellation(self.E,self.Ein,self.gamma*2)
+        R=self.T.findRectangle(self.D.iloc[:,:self.d]) # map points to rectangles
         self.D['R']=[tuple(r) for r in R]
         self.D.sort_values(by=self.D.columns[self.d],inplace=True) # sort by label so that NA will be last
 #        return

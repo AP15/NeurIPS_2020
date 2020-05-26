@@ -13,5 +13,8 @@ import utility
 #utility.experiment1('parallel', 100000, 2, 10, 1)
 #utility.plotAccuracyBudget('parallel')
 
-utility.experiment1('general', 100000, 2, 7, 10)
-utility.plotAccuracyBudget('general')
+#utility.experiment1kmeans('general', 100000, 2, 10, 10)
+#utility.plotAccuracyBudget('general')
+
+utility.experiment2kmeans('general', 1000, 2, 3, 3)
+utility.scatterAccuracyGamma('general')

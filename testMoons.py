@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue May 19 12:26:25 2020
+Created on Thu May 21 18:08:56 2020
 
 @author: apaudice
 """
@@ -13,35 +13,37 @@ import experiments as exp
 warnings.filterwarnings("ignore")
 
 
-n_exp = 5
-rep = 3
+rep = 10
 
-n = 1000000
+n = 10000
 d = 2
-k = 10
+k = 3
+gamma = 1
+
+data='moons'
 
 experiments = exp.Experiments()
 
-X, y, n, k = experiments.dataGeneration('parallel', n, d, k, gamma=1, rank=2, cn=50)
+X, y, n, k = experiments.dataGeneration(data, n, d, k, gamma=gamma, rank=d, cn=100)
 
-experiments.expAccuracyBudget(dataset = 'parallel',
+experiments.expAccuracyQueries(dataset = data,
                               algorithm = 'ecc', 
                               X_data = X,
                               y_data = y,
                               n = n,
                               d = d,
                               k = k,
-                              n_exp = n_exp,
+                              gamma = gamma,
                               rep = rep)
 
-experiments.expAccuracyBudget(dataset = 'parallel',
+experiments.expAccuracyQueries(dataset = data,
                               algorithm = 'kmeans', 
                               X_data = X,
                               y_data = y,
                               n = n,
                               d = d,
                               k = k,
-                              n_exp = n_exp,
+                              gamma = gamma,
                               rep = rep)
 
-utility.plotAccuracyBudget('parallel')
+utility.plotAccuracyQueries(data)

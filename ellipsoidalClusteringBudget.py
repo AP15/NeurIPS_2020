@@ -52,11 +52,11 @@ class ECC(object):
                 #print(R_mve)
             Xt = data.copy() 
             # project dataset on the eigenvectors of the MVE
-            Xt.iloc[:,:-1] = np.dot(Xt.iloc[:,:-1] - mu_mve, R_mve)
+            Xt.iloc[:,:] = np.dot(Xt.iloc[:,:] - mu_mve, R_mve)
             # Find the separator which is the unit ball, with some tolerance
             E = ellipsoid.Ellipsoid(np.zeros(d),l=1.1*np.ones(d)) 
             # the subset we're going to clean
-            D = Xt[E.contains(Xt.iloc[:,:-1])] 
+            D = Xt[E.contains(Xt.iloc[:,:])] 
             D.loc[S_C, 'y'] = True # in C
             nSC = D.index.intersection(S.difference(S_C))
             if not nSC.empty:
@@ -65,7 +65,6 @@ class ECC(object):
 
         
         def removeFalsePositives(self, X, E, oracle):
-            print("removing false positives...")
             cleaner = cleaning.Cleaner(X, E, self.gamma)
             cleaner.greedyHull()
             cleaner.tessellationClean(oracle)
@@ -95,7 +94,7 @@ class ECC(object):
                 nc = pd.DataFrame({'idx': S, 'lab': S_labels}).groupby('lab').count() # number of samples per cluster
                 p=nc.sort_values(by='idx',ascending=False).index[0] # id of the largest cluster sample
                 S_C = S[S_labels==p] #Idx of largest cluster
-                X_SC = data.loc[S_C].iloc[:,:-1] #Datapoints of the largest cluster
+                X_SC = data.loc[S_C].iloc[:,:] #Datapoints of the largest cluster
                 print("Got %d points from cluster %d" % (len(S_C), p))
                 
                 # 2. Compute the separator, change coordinate system

@@ -10,17 +10,17 @@ import pandas as pd
 import warnings
 import matplotlib.pyplot as plt
 import datagen
-import ellipsoidalClustering as ecc
+import ecc
 import oracle
 
 #Suppress Warnings
 warnings.filterwarnings("ignore")
 
 #np.random.seed(0)
-n_p = 100000
+n_p = 10000000
 n_k = 5
-g = .5
-dim = 15
+g = 5
+dim = 2
 rank = dim
 X_, y_, Ws, cs = datagen.randomDataset(n=n_p, k=n_k, d=dim, gamma=g, 
                                        tightMargin=True)
@@ -34,11 +34,11 @@ if dim==2 and plot:
 O = oracle.SCQOracle(pd.DataFrame(y_))
 
 X = pd.DataFrame(X_) # Our unlabeled dataset
-X['y'] = np.nan
+#X['y'] = np.nan
 
 # Test cluster
 alg = ecc.ECC(n_k, g)
-C, n_queries = alg.cluster(X, O, dim)
+C, n_queries = alg.cluster(X, O)
 
 print("#Queries: %d" % n_queries)
 print("Accuracy: %2f" % (sum(C==y_)/n_p))
