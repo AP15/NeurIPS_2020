@@ -118,6 +118,7 @@ class ECC(object):
     
     
     def clusterMonitor(self, data, oracle, y):
+        np.random.seed(0)
         queries_s, queries_m = 0, 0
         queries, scores = [], []
         #Get active nodes      

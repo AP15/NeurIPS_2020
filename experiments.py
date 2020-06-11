@@ -9,7 +9,6 @@ import numpy as np
 import pandas as pd
 import Dataset as dataset
 import SCQKMeansBudget as scqkm
-import ellipsoidalClusteringBudget as eccOld
 import ecc as ecc
 import matplotlib.pyplot as plt
 import oracle
@@ -93,8 +92,6 @@ class Experiments(object):
             alg = scqkm.SCQKmeans(k)
         elif(algorithm=='white_kmeans'):
             alg = scqkm.SCQKmeans(k)
-        elif (algorithm=='eccOld'):
-            alg = eccOld.ECC(k, g)
         elif (algorithm=='ecc'):
             alg = ecc.ECC(k, g+10)
         else:
@@ -126,44 +123,8 @@ class Experiments(object):
             queries_matrix[i, :queries_round[i].size] = queries_round[i]
             scores_matrix[i, :queries_round[i].size] = scores_round[i]
         
-        np.savez(dataset + '_' + str(d) + '_' + algorithm + '_accuracyQueries', scores, queries, queries_matrix, scores_matrix)
-        
-    
-    def expAccuracyBudget(self, dataset, algorithm='kmeans', X_data = None, 
-                          y_data = None, n=1000, d=2, k=3, gamma=1, 
-                          n_exp=5, rep = 5, 
-                          showClustering=False):
-        
-        g = gamma
-        
-        scores = np.zeros((rep, n_exp))
-        queries = np.zeros((rep, n_exp))
-        
-        B = np.linspace(10*np.log(n), 50*np.sqrt(n), n_exp)
-        
-        if (algorithm=='kmeans'):
-            alg = scqkm.SCQKmeans(k)
-        elif (algorithm=='eccOld'):
-            alg = eccOld.ECC(k, g)
-        elif (algorithm=='ecc'):
-            alg = ecc.ECC(k, g)
-        else:
-            print('Invalid algorithm')
-            return
-    
-        for i in range(rep):
-            for j in range(n_exp):
-                X = pd.DataFrame(X_data)
-                O = oracle.SCQOracle(pd.DataFrame(y_data))
-                print('**************************************************************')
-                print('Rep:', str(i+1) + '/' + str(rep) + '.Exp:', str(j+1) + '/' + str(n_exp) +'.')
-                y_pred, queries[i, j] = alg.cluster(X, O, int(B[j]))
-                scores[i, j] = sum(y_pred==y_data)/n
-                if (j == n_exp-1 and showClustering):
-                    showClustering(X.values, k, y_pred, dataset)
-        
-        np.savez(dataset + '_' + algorithm + '_accuracy', B, scores, queries)
-        
+        np.savez(dataset + '_' + str(d) + '_' + algorithm + '_accuracyQueries', 
+                 scores, queries, queries_matrix, scores_matrix)
         
     def dataGeneration(self, data, n, d, k, gamma = 1, rank = None, cn = 1):
         #np.random.seed(0)

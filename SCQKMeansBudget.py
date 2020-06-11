@@ -29,22 +29,7 @@ class SCQKmeans(object):
     def __init__(self, k):
         self.k = k
     
-    def cluster(self, data, oracle, B):
-        """Scatter data along the first 2 features.
- 
-        Parameters
-        ------------
-        data : object
-            Data to cluster.            
-        B: int
-            #Queries.
-    
-        Returns
-        ------------
-        C : clustering
-            Clustering of data.
-        """
-        
+    def cluster(self, data, oracle, B):       
         #Get active nodes      
         activeNodes = data.copy()
         n = activeNodes.shape[0]  
@@ -103,20 +88,7 @@ class SCQKmeans(object):
     
     
     def clusterMonitor(self, data, oracle, y):
-        """Scatter data along the first 2 features.
- 
-        Parameters
-        ------------
-        data : object
-            Data to cluster.            
-        B: int
-            #Queries.
-    
-        Returns
-        ------------
-        C : clustering
-            Clustering of data.
-        """
+        np.random.seed(0)
         queries_s, queries_m = 0, 0
         queries, scores = [], []
         #Get active nodes      

@@ -13,8 +13,7 @@ import time
 import logging
 import oracle
 import ellipsoid as ell
-import tessellation
-from SignedTessellation import SignedTessellation
+import SignedTessellation
 
 # from https://stackoverflow.com/questions/16750618/
 # def ppoint_in_hull(point, hull, tolerance=1e-12):
