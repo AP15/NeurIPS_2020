@@ -3,6 +3,8 @@
 Created on Fri Jun  5 12:01:06 2020
 
 @author: apaudice
+
+Script for the experiment in the paper.
 """
 
 import warnings
