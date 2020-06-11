@@ -122,12 +122,55 @@ def randomClusterMoons(n: int, d: int, r: int = None):
     """
 
     r=d if r is None else r
-    P, y = moons(n_samples=n, noise=0.00)
-    P = P[y==0]
+    #offset = (np.random.choice(3, 1))/10
+    #print('Offset:', offset)
+    #P, y = moons(n_samples=n, noise=np.random.uniform(offset, offset+0.05))
+    P, y = moons(n_samples=n, noise=np.random.uniform(0, 0.3))
+    P = P[y==np.random.binomial(1, 0.5)]
     Pd=np.pad(P, [(0, 0), (0, d-r)], mode='constant')
     Pd/=np.max(np.linalg.norm(Pd, axis=1))
     return Pd
 
+def toLatentParallel(X, W, c):
+    """Map to the latent space.
+    Parameters
+    ----------
+    X: numpy.ndarray
+        An n-by-d array, each row is a point in R^d
+    W: numpy.ndarray
+        A d-by-d matrix specifying the transformation
+    c: numpy.ndarray
+        A d-size array giving the center of the transformation
+    Returns
+    -------
+    The inner product of W and (X-c). In other words, set the origin in c and then apply W.
+    Note that toLatent(toVisible(X,W,c),W,C) gives X.
+    """
+    d = W.shape[1]
+    D = np.asarray([[1000, 0], [0, 1]])
+    return np.dot(X-c, D) if X.shape[0] else np.zeros((0, X.shape[1])) 
+    #return np.dot(X-c, W) if X.shape[0] else np.zeros((0, X.shape[1]))
+
+
+def toVisibleParallel(X, W, c):
+    """Reverse of toLatent(X, W, C).
+    Parameters
+    ----------
+    X: numpy.ndarray
+        An n-by-d array, each row is a point in R^d
+    W: numpy.ndarray
+        A d-by-d matrix specifying the transformation
+    c: numpy.ndarray
+        A d-size array giving the center of the transformation
+    Returns
+    -------
+    The inner product of W^(-1) and X, plus c. In other words, apply the inverse of W and shift by c.
+    Note that toVisible(toLatent(X,W,c),W,C) gives X.
+    """
+    d = W.shape[1]
+    D = np.asarray([[1000, 0], [0, 1]])
+    return np.dot(X, np.linalg.inv(D))+c if X.shape[0] else np.zeros((0, X.shape[1]))
+    #return np.dot(X, np.linalg.inv(W))+c if X.shape[0] else np.zeros((0, X.shape[1]))
 
 def toLatent(X, W, c):
     """Map to the latent space.
@@ -321,6 +364,88 @@ def randomDatasetMoons(n: int, k: int, d: int, gamma: float = 0.5, r: int = None
     m=clusterMargins(X, y, Ws, cs)
 
     while min(m)<np.sqrt(1+gamma):
+        i=np.argmin(m)
+        X[y==i]=toVisible(toLatent(X[y==i], Ws[i], cs[i])*(0.99*m[i])/np.sqrt(1+gamma), Ws[i], cs[i])
+        m=clusterMargins(X, y, Ws, cs)
+
+    if tightMargin:
+        while max(m)>1.01*np.sqrt(1+gamma):
+            i=np.argmax(m)
+            X[y==i]=toVisible(toLatent(X[y==i], Ws[i], cs[i])*m[i]/np.sqrt(1+gamma), Ws[i], cs[i])
+            m=clusterMargins(X, y, Ws, cs)
+
+    while min(m)<np.sqrt(1+gamma):
+        i=np.argmin(m)
+        X[y==i]=toVisible(toLatent(X[y==i], Ws[i], cs[i])*(0.99*m[i])/np.sqrt(1+gamma), Ws[i], cs[i])
+        m=clusterMargins(X, y, Ws, cs)
+
+    return X, y.astype(int), Ws, cs
+
+
+def randomDatasetParallel(n: int, k: int, d: int, gamma: float = 0.5, r: int = None, cn: float = None,
+                  tightMargin: bool = False):
+    """Generate a random dataset controlling the clusters' rank, margin, and stretch.
+    Parameters
+    ----------
+    n : int
+        Number of points
+    k : int
+        Number of clusters
+    d : int
+        Dimension of ambient space
+    gamma : float
+        Margin
+    r : int
+        Rank of clusters
+    cn : float
+        Condition number of the PSD matrices of clusters. A higher value means higher stretch.
+    tightMargin : bool
+        Whether to tighten the margin around gamma (default is False)
+    Returns
+    -------
+    X : numpy.ndarray
+        an n-by-d array of the input points
+    y : numpy.ndarray
+        a length-h array containing the cluster labels
+    Ws : list
+        list of PSD matrices, one per cluster
+    cs : list
+        list of centers, one per cluster
+    """
+
+    if r is None:
+        r=d
+    X=np.zeros((0, d))
+    y=np.zeros(0)
+    Ws=[np.asarray([[1, 0], [0, 1]]) for i in range(k)]
+    #Ws=[randomPSD(d) if cn is None else randomPSD(d, cn) for i in range(k)]  # random PSD matrices
+    cs=rball(d, k)  # random centers
+    c_x = np.linspace(0, k, k)
+    for i in range(k):
+        cs[i, :] = [c_x[i], 1]
+    for i in range(k):
+        nk=int(n/k)#(n-X.shape[0])//(k-i)  # cluster size
+        y=np.r_[y, i*np.ones(nk)]
+        # move to the latent metric of C
+        csLat=toLatent(cs, Ws[i], cs[i])
+        XLat=toLatent(X, Ws[i], cs[i])  # center and transform
+        # distance to other points, including centers of future clusters
+        D=np.linalg.norm(np.r_[XLat, csLat[i+1:]], axis=1)
+        gap=np.min(D)  # distance of closest point
+        # generate cluster
+        #P=randomClusterMoons(2*nk, d, r)
+        P=randomCluster(nk, d, r)
+        #P*=2*gap/np.max(np.linalg.norm(P, axis=1))  # rescale a bit
+        P*=gap/10/d/np.max(np.linalg.norm(P, axis=1)) # rescale a bit
+        # convert cluster to visible space and add it
+        X=np.r_[X, toVisible(P, Ws[i], cs[i])]  # if X.shape[0]>0 else P
+    y=y.astype(int)
+
+    # Adjust margins if too small
+    m=clusterMargins(X, y, Ws, cs)
+
+    while min(m)<np.sqrt(1+gamma):
+        print('Hey')
         i=np.argmin(m)
         X[y==i]=toVisible(toLatent(X[y==i], Ws[i], cs[i])*(0.99*m[i])/np.sqrt(1+gamma), Ws[i], cs[i])
         m=clusterMargins(X, y, Ws, cs)

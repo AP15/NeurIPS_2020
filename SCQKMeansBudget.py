@@ -8,6 +8,7 @@ Created on Tue May 19 12:19:38 2020
 import numpy as np
 import pandas as pd
 import BinSearch as bs
+import matplotlib.pyplot as plt
 
 class SCQKmeans(object):
     """SBD algorithms for k-means with same-cluster-queries.
@@ -164,6 +165,24 @@ class SCQKmeans(object):
             r = searcher.findRaySCQ(dist_sort, oracle, idxs, S_C[0]) 
             print('Ray:', r)
             
+            #Print Heatmap
+            if (False):
+                f = plt.figure()      
+                plt.scatter(X[:,0], X[:,1], c = dist_mu, s=50)    
+                plt.scatter(mu_p[0], mu_p[1], color='r', marker = 'x', label='mu', s= 200, linewidths=20)
+                plt.xlabel(r'$x_1$')
+                plt.ylabel(r'$x_2$')
+                plt.grid()
+                plt.show()
+            
+                f = plt.figure()     
+                plt.scatter(X[:,0], X[:,1], c = dist_mu, s=50)    
+                plt.scatter(X[dist_mu <= r,0], X[dist_mu <= r,1], color='r', marker = '1', label='mu', s= 50, linewidths=20)
+                plt.xlabel(r'$x_1$')
+                plt.ylabel(r'$x_2$')
+                plt.grid()
+                plt.show()
+            
             #Form cluster
             cluster_p_idxs = activeNodes.loc[dist_mu <= r].index
             #print('Clustered points:', cluster_p_idxs)
@@ -173,6 +192,17 @@ class SCQKmeans(object):
             scores.append(sum(C==y)/No)
             queries.append(oracle.getCount())
             queries_m = oracle.getCount()
+            
+            #Print Remaining points
+            if (False):
+                f = plt.figure()
+                plt.scatter(activeNodes.values[:, 0], activeNodes.values[:, 1],
+                            s=10, 
+                            marker='o')
+                plt.xlabel(r'$x_1$')
+                plt.ylabel(r'$x_2$')
+                plt.grid()
+                plt.show()
         
         queries_m -= queries_s
         queries_s = oracle.getCount() - queries_m

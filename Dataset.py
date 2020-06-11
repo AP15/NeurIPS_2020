@@ -179,7 +179,7 @@ class Dataset(object):
         """
         
         c = np.zeros((self.k, 2))
-        c_x = np.linspace(0, self.k*10, self.k)
+        c_x = np.linspace(0, self.k*4, self.k)
         for i in range(self.k):
             c[i, :] = [c_x[i], 1+np.random.normal()]
         

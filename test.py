@@ -12,8 +12,6 @@ import experiments as exp
 #Suppress Warnings
 warnings.filterwarnings("ignore")
 
-
-n_exp = 3
 rep = 10
 
 n = 100000
