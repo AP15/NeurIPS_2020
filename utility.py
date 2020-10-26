@@ -1,14 +1,8 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue May 19 11:02:50 2020
-
-@author: apaudice
-"""
-
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn import decomposition
+import matplotlib
 
 def pcaData(X_train, n_pca):
     stdsc = StandardScaler()
@@ -19,7 +13,7 @@ def pcaData(X_train, n_pca):
     
     return X_pca
 
-def plotQueriesDimensions(filename):
+def plotQueriesDimensions(filename):    
     #data = np.load('ExpDim.npz')
     data = np.load('ExpDim.npz')
     scores_kmeans, queries_kmeans = data['arr_0'], data['arr_1']
@@ -55,11 +49,16 @@ def plotQueriesDimensions(filename):
     f.savefig('Figures/' + filename + "_QueriesDimensions.eps", bbox_inches='tight')
 
 def plotAccuracyQueriesPCA2(filename, d):
-    data = np.load(filename+"_"+str(d)+'_kmeans_accuracyQueries.npz')
+    matplotlib.rcParams['ps.useafm'] = True
+    matplotlib.rcParams['pdf.use14corefonts'] = True
+    matplotlib.rcParams['text.usetex'] = True
+    matplotlib.rcParams['font.family'] = 'sans-serif'
+    
+    data = np.load("Data/"+filename+"_"+str(d)+'_kmeans_accuracyQueries.npz')
     scores_kmeans, queries_kmeans = data['arr_0'], data['arr_1']
-    data = np.load(filename+"_"+str(d)+'_white_kmeans_accuracyQueries.npz')
+    data = np.load("Data/"+filename+"_"+str(d)+'_white_kmeans_accuracyQueries.npz')
     scores_w_kmeans, queries_w_kmeans = data['arr_0'], data['arr_1']
-    data = np.load(filename+"_"+str(d)+'_ecc_accuracyQueries.npz')
+    data = np.load("Data/"+filename+"_"+str(d)+'_ecc_accuracyQueries.npz')
     queries, scores_ecc = data['arr_2'], data['arr_3']
     queries_ecc_mean = np.nanmean(queries, axis=0)
     scores_ecc_mean = np.nanmean(scores_ecc, axis=0)
@@ -69,15 +68,16 @@ def plotAccuracyQueriesPCA2(filename, d):
     print('#Queries kmeans:', int(np.mean(queries_kmeans, axis=0)))
     print('#Queries ecc:', int(queries_ecc_mean[-1]))
     print('Accuracy kmeans:', np.mean(scores_kmeans, axis=0))
-    print('Accuracy ecc:', scores_ecc_mean[-1])
+    print('Accuracy ecc:', scores_ecc_mean[-1])    
     
     #Plot results
     f = plt.figure(figsize=(7,6))
     plt.hlines(1-np.mean(scores_kmeans, axis=0), avg_queries_kmeans, 
-               queries_ecc_mean[-1], linestyle='--', colors='blue', label='SCQ-k-means')
+               queries_ecc_mean[-1], linestyle='--', colors='blue', 
+               label='SCQ-k-means')
     
     plt.hlines(1-np.mean(scores_w_kmeans, axis=0), avg_queries_w_kmeans, 
-               queries_ecc_mean[-1], linestyle='--', colors='green', label='whitened-SCQ-k-means')
+                queries_ecc_mean[-1], linestyle=':', colors='green', label='whitened-SCQ-k-means')
     
     plt.scatter(avg_queries_kmeans, 1-np.mean(scores_kmeans, axis=0),
                           color='blue', marker='o')
@@ -94,11 +94,12 @@ def plotAccuracyQueriesPCA2(filename, d):
     plt.ylim(0, 1)
     plt.xlim(0, queries_ecc_mean[-1])
     
-    plt.xlabel('queries', fontsize=16)
-    plt.ylabel('clustering error',  fontsize=16)
-    plt.xticks(fontsize=16)
-    plt.yticks(fontsize=16)
-    plt.legend(fontsize=16, framealpha=1)
+    ft = 20
+    plt.xlabel('queries', fontsize=ft)
+    plt.ylabel('clustering error',  fontsize=ft)
+    plt.xticks(fontsize=ft)
+    plt.yticks(fontsize=ft)
+    plt.legend(fontsize=ft, framealpha=1)
     plt.grid()
     plt.show()
     f.savefig('Figures/' + filename + "_" + str(d) + "_" + "PCA_errorQueries.eps", bbox_inches='tight')
